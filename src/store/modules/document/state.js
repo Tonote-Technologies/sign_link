@@ -1,0 +1,17 @@
+export default {
+  documents: [],
+  hasLink: false,
+  documentAuditTrail: {},
+  statistics: {},
+  documentsByStatus: [],
+  document: [],
+  doneEditing: null,
+  resourceTools: [],
+  isOpenModal: false,
+  message: null,
+  cancel: false,
+  isDoneLoading: false,
+  isLoading: false,
+  isDocLoading: false,
+  isToolLoading: false,
+};
