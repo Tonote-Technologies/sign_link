@@ -53,9 +53,8 @@
                 {{ createdAt(resPreview.data.created_at) }}</small>
             </div>
           </div>
-
           <div class="card-body mail-message-wrapper pt-2 px-0 border-top" id="download_res_doc">
-            <RenderPDFDoc :file="resPreview.data.file_url" comp="response" />
+            <RenderPDFDoc v-for="doc in sortedFile" :key="doc.id" :file="doc.file_url" comp="response" />
           </div>
         </div>
       </div>
@@ -138,7 +137,7 @@ import ModalComp from "@/components/ModalComp.vue";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import moment from "moment";
 
 import { useActions, useGetters } from "vuex-composition-helpers/dist";
@@ -163,6 +162,17 @@ const loading = ref(false);
 const isLoading = ref(true);
 const uri = ref("");
 const theDoc = ref("");
+
+const sortedFile = computed(() => {
+  const files = [];
+  resPreview.value?.data.document.documentUploads?.filter((item) => {
+    if (item.status == 'Processed' && item.number_ordering != null) {
+      files.push({ id: item.id, file_url: item.file_url, number: item.number_ordering, isOldDoc: false });
+    }
+    files.sort((a, b) => (a.number > b.number ? 1 : -1));
+  });
+  return files;
+});
 
 const exportPDF = () => {
   const data = document.getElementById("download_res_doc");
