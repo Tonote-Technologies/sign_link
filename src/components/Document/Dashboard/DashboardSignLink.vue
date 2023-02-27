@@ -26,13 +26,13 @@
               isView: true,
             })
           ">
-            <Icon icon="mdi:file-document-edit-outline" style="font-size:1.2rem;" />
+            <Icon icon="mdi:file-document-edit-outline" style="font-size: 1.2rem" />
             {{ doc.title }}
           </a>
         </td>
         <td>
-          <span class="badge rounded-pill fw-normal" :class="[doc.active == '0' ? 'bg-dark' : 'badge-light-dark']"
-            style="font-size:10px">
+          <span class="badge rounded-pill fw-normal" :class="[!doc.active ? 'bg-danger' : 'badge-light-dark']"
+            style="font-size: 10px">
             {{ linkUrl + "/to-sign/" + doc.id }}
           </span>
         </td>
@@ -40,29 +40,34 @@
           <span role="button" class="text-primary fw-bolder" @click="showResponse({ id: doc.id, doc: doc })">
             {{ doc.response_count > 0 ? doc.response_count : 0 }}
             response(s)
-            <Icon icon="material-symbols:edit-square-outline" style="font-size:1rem;" />
+            <Icon icon="material-symbols:edit-square-outline" style="font-size: 1rem" />
           </span>
         </td>
         <td>
           <div class="d-flex align-items-center">
             <button type="button" class="btn btn-sm waves-effect"
-              :class="[doc.active == '0' ? 'btn-dark' : 'btn-outline-primary']"
+              :class="[!doc.active ? 'btn-danger' : 'btn-outline-primary']"
               v-clipboard:copy="linkUrl + '/to-sign/' + doc.id" v-clipboard:success="onCopy" v-clipboard:error="onError"
-              :disabled="doc.active == '0' ? true : false">
+              :disabled="(doc.active = !doc.active)">
               Copy link
             </button>
             <div class="dropdown">
               <button type="button"
                 class="btn btn-sm dropdown-toggle hide-arrow py-0 waves-effect waves-float waves-light"
                 data-bs-toggle="dropdown" aria-expanded="false">
-                <Icon icon="mdi:ellipsis-vertical" style="font-size:1.2rem;" />
+                <Icon icon="mdi:ellipsis-vertical" style="font-size: 1.2rem" />
               </button>
               <div class="dropdown-menu dropdown-menu-end">
                 <template v-if="dashboard.status != 'Deleted'">
-                  <a class="dropdown-item" href="#" @click="deactivateLink(doc.id)">
-                    <Icon icon="ri:link-m" style="font-size:1.2rem;" />
-                    <span v-if="doc.active == '0'"> Deactivate</span>
-                    <span v-else> Activate</span>
+                  <a class="dropdown-item" href="#" @click="
+                    deactivateLink({
+                      id: doc.id,
+                      isActive: (doc.active = !doc.active),
+                    })
+                  ">
+                    <Icon icon="ri:link-m" style="font-size: 1.2rem" />
+                    <span v-if="!doc.active">&nbsp;Activate</span>
+                    <span v-else>&nbsp;Deactivate</span>
                   </a>
                   <a class="dropdown-item" role="button" @click="
                     getDocument({
@@ -71,7 +76,7 @@
                       isView: true,
                     })
                   ">
-                    <Icon icon="ic:outline-remove-red-eye" style="font-size:1.2rem;" />
+                    <Icon icon="ic:outline-remove-red-eye" style="font-size: 1.2rem" />
                     <span> View</span>
                   </a>
                   <a class="dropdown-item" role="button" @click="
@@ -81,7 +86,7 @@
                       isEdit: true,
                     })
                   ">
-                    <Icon icon="material-symbols:edit-outline-rounded" style="font-size:1.2rem;" />
+                    <Icon icon="material-symbols:edit-outline-rounded" style="font-size: 1.2rem" />
                     <span> Edit</span>
                   </a>
                 </template>
@@ -97,7 +102,7 @@
                   </a>
                 </template>
                 <a class="dropdown-item" href="#" @click="deleteDocument('delete', doc.id)">
-                  <Icon icon="uil:trash" style="font-size:1.2rem;" />
+                  <Icon icon="uil:trash" style="font-size: 1.2rem" />
                   <span> Delete</span>
                 </a>
               </div>
@@ -135,11 +140,13 @@
           <template v-if="!isLoading">
             <template v-if="signLinkResponses.length > 0">
               <tr v-for="(sign, index) in signLinkResponses" :key="index">
-                <td>{{ sign.first_name + ' ' + sign.last_name }}</td>
-                <td>{{ sign.email ?? 'Not available' }}</td>
+                <td>{{ sign.first_name + " " + sign.last_name }}</td>
+                <td>{{ sign.email ?? "Not available" }}</td>
                 <td>{{ dateTime(sign.updated_at) }}</td>
                 <td>
-                  <button class="btn btn-sm btn-primary" @click="showParticipantDoc(sign)">View</button>
+                  <button class="btn btn-sm btn-primary" @click="showParticipantDoc(sign)">
+                    View
+                  </button>
                 </td>
               </tr>
             </template>
@@ -190,7 +197,7 @@ const dateTime = (value) => {
   return moment(value).format("Do MMM YYYY, hh:mm A");
 };
 
-const emit = defineEmits(['close'])
+const emit = defineEmits(["close"]);
 
 const route = useRouter();
 const toast = useToast();
@@ -231,23 +238,23 @@ watch(
   }
 );
 
-const docTitle = ref('')
-const createdAt = ref('')
+const docTitle = ref("");
+const createdAt = ref("");
 const showResponse = (params) => {
-  isLoading.value = responseModal.value = true
-  docTitle.value = params.doc.title
-  createdAt.value = params.doc.created_at
-  getSignLinkResponses(params.doc.id)
+  isLoading.value = responseModal.value = true;
+  docTitle.value = params.doc.title;
+  createdAt.value = params.doc.created_at;
+  getSignLinkResponses(params.doc.id);
 
   setTimeout(() => {
-    isLoading.value = false
+    isLoading.value = false;
   }, 1000);
-}
+};
 
 const showParticipantDoc = (params) => {
-  responseModal.value = false
-  previewResponse({ title: docTitle.value, data: params })
-}
+  responseModal.value = false;
+  previewResponse({ title: docTitle.value, data: params });
+};
 
 const getDocument = (params) => {
   if (params.isView && params.status == "Sign") {
@@ -268,29 +275,35 @@ const checkAll = () => {
     }
   }
   hasMultipleSelection.value = docIds.value.length > 0 ? true : false;
-  emit('showDeleteButton', { show: hasMultipleSelection.value, signLinkDocIds: docIds.value })
+  emit("showDeleteButton", {
+    show: hasMultipleSelection.value,
+    signLinkDocIds: docIds.value,
+  });
 };
 
 const updateCheckAll = () => {
   hasMultipleSelection.value = docIds.value.length - 1 >= 0 ? true : false;
-  emit('showDeleteButton', { show: hasMultipleSelection.value, signLinkDocIds: docIds.value })
+  emit("showDeleteButton", {
+    show: hasMultipleSelection.value,
+    signLinkDocIds: docIds.value,
+  });
 
-  isCheckAll.value = (docIds.value.length == links.value.length) ? true : false
-
+  isCheckAll.value = docIds.value.length == links.value.length ? true : false;
 };
 
 const action = ref("");
 const deleteDocument = (params, id) => {
   if (id != "") {
-    emit('showDeleteButton', { showModal: true, signLinkDocIds: [id] })
+    emit("showDeleteButton", { showModal: true, signLinkDocIds: [id] });
   }
 
   action.value = params;
   isDeleteOrRestore.value = true;
 };
 
-const deactivateLink = (linkId) => {
-  editLinkStatus({ id: linkId, payload: { active: '0' } })
+const deactivateLink = (params) => {
+  const dataObj = { id: params.id, payload: { active: params.isActive } };
+  editLinkStatus(dataObj);
 };
 
 const message = "Copied to clipboard!";
@@ -332,6 +345,4 @@ onMounted(() => {
 });
 </script>
 
-<style scoped>
-
-</style>
+<style scoped></style>

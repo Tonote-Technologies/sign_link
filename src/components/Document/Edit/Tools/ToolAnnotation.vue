@@ -2,9 +2,9 @@
 <template>
   <Vue3DraggableResizable v-if="sign64 == null && tool.tool_name != 'Textarea'" :key="tool.id"
     :initH="tool.tool_name != 'Photo' ? 30 : 100" :initW="Number(tool.tool_width)" :x="Number(tool.tool_pos_left)"
-    :y="Number(tool.tool_pos_top)" v-model:x="x" v-model:y="y" :parent="true" :draggable="profile?.id != null"
-    :resizable="false" @drag-end="dragEnd($event, tool)" class="image-area" :handles="['tl', 'tr', 'bl', 'br']"
-    :class="tool.tool_class">
+    :y="Number(tool.tool_pos_top)" v-model:x="x" v-model:y="y" :parent="true"
+    :draggable="comp == 'audit' ? false : profile?.id != null" :resizable="false" @drag-end="dragEnd($event, tool)"
+    class="image-area" :handles="['tl', 'tr', 'bl', 'br']" :class="tool.tool_class">
     <div @click="getUserId(tool)" class="h-100">
       <div v-if="tool.tool_name == 'Photo'">
         <img src="@/assets/noimage.png" class="img-fluid" alt="Preview" />
@@ -15,7 +15,7 @@
       </div>
     </div>
 
-    <span class="drag-me">
+    <span class="drag-me" v-if="comp == 'audit' ? false : true">
       <span title="Drag" class="btn btn-xs btn-secondary rounded-0 movement">
         <MoveIcon />
       </span>
@@ -26,18 +26,23 @@
       </span>
     </span>
   </Vue3DraggableResizable>
-  <Vue3DraggableResizable v-else :initH="Number(tool.tool_height)" :initW="Number(tool.tool_width)" :minW="70"
-    :minH="30" :x="Number(tool.tool_pos_left)" :y="Number(tool.tool_pos_top)" :parent="true" v-model:x="x" v-model:y="y"
-    v-model:h="toolHeight" v-model:w="toolWidth" :draggable="tool.allow_signature || profile?.id != null"
-    :resizable="tool.allow_signature || profile?.id != null" @drag-end="dragEnd($event, tool)"
+  <Vue3DraggableResizable v-else :initH="Number(tool.tool_height)" :initW="Number(tool.tool_width)" :minW="70" :minH="30"
+    :x="Number(tool.tool_pos_left)" :y="Number(tool.tool_pos_top)" :parent="true" v-model:x="x" v-model:y="y"
+    v-model:h="toolHeight" v-model:w="toolWidth"
+    :draggable="comp == 'audit' ? false : tool.allow_signature || profile?.id != null"
+    :resizable="comp == 'audit' ? false : tool.allow_signature || profile?.id != null" @drag-end="dragEnd($event, tool)"
     @resize-end="resizeEnd(tool, toolWidth, toolHeight)"
-    :class="[tool.tool_name == 'Textarea' ? 'text-wrapper z-indexed' : 'image-area']"
-    :handles="['tl', 'tr', 'bl', 'br']" class-name-active="active-class" class-name-dragging="dragging-class"
-    class-name-handle="handle-class" class-name-resizing="resizing-class">
-    <input v-if="tool.tool_name == 'Textarea'" type="text" v-model="tool.value" class="textareaTool h-100"
+    :class="[tool.tool_name == 'Textarea' ? 'text-wrapper z-indexed' : 'image-area']" :handles="['tl', 'tr', 'bl', 'br']"
+    class-name-active="active-class" class-name-dragging="dragging-class" class-name-handle="handle-class"
+    class-name-resizing="resizing-class">
+    <textarea v-if="tool.tool_name == 'Textarea'" v-model="tool.value" class="textareaTool h-100" :data-id="tool.id"
+      @blur="textInput($event.target, x, y)" placeholder="Input text here"
+      :readonly="comp == 'audit' ? false : !tool.allow_signature && !profile?.id ? true : false"
+      style="border: none; outline: none; font-weight: 500; transition: width 0.25s;color:#000!important;"></textarea>
+  <!-- <input v-if="tool.tool_name == 'Textarea'" type="text" v-model="tool.value" class="textareaTool h-100"
       :data-id="tool.id" @blur="textInput($event.target, x, y)" placeholder="Input text here"
       :readonly="!tool.allow_signature && !profile?.id ? true : false"
-      style="border: none; outline: none; font-weight: 500; transition: width 0.25s;color:#000!important;" />
+              style="border: none; outline: none; font-weight: 500; transition: width 0.25s;color:#000!important;" /> -->
     <template v-else>
       <div class="grid" v-if="isToolLoading.id == tool.id && isToolLoading.active">
         <span class="spinner-border" role="status"></span>
@@ -45,7 +50,7 @@
       <img v-else :src="b64" @contextmenu.prevent="false" style="object-fit: scale-down" />
     </template>
 
-    <span class="drag-me">
+    <span class="drag-me" v-if="comp == 'audit' ? false : true">
       <template v-if="tool.allow_signature || profile?.id">
         <span title="Drag" class="btn btn-xs btn-secondary rounded-0 movement">
           <MoveIcon />
@@ -151,7 +156,7 @@ import { useActions, useGetters } from "vuex-composition-helpers/dist";
 const { dragEnd, resizeEnd } = useDragResizeComposable();
 const { toBase64 } = useConvertToBase64Composable();
 
-const props = defineProps({ tool: Object, owner: Object });
+const props = defineProps({ tool: Object, owner: Object, comp: String });
 
 const { link, profile, isToolLoading } = useGetters({
   profile: "auth/profile",
@@ -206,6 +211,7 @@ const swapModal = () => {
 };
 
 const getUserId = (params) => {
+  if (props.comp == "audit") return;
   if (params.tool_name == "Initial") initialModal.value = true;
   if (params.tool_name == "Signature") affixModal.value = true;
   if (params.tool_name == "Photo") uploadImage.value = true;

@@ -11,8 +11,13 @@
           </router-link>
         </div>
         <div class="text-center">
-          <button class="btn btn-sm btn-primary waves-effect me-1 d-none" @click="exportPDF">
-            Download
+          <button class="btn btn-sm btn-outline-primary waves-effect me-1" @click="exportHTMLToPDF"
+            :disabled="isDownload">
+            <template v-if="isDownload">
+              <span class="spinner-border spinner-border-sm"></span>
+              Downloading
+            </template>
+            <template v-else>Download</template>
           </button>
           <button class="btn btn-sm btn-primary waves-effect">
             Share
@@ -23,7 +28,7 @@
     </div>
 
     <div class="row">
-      <div class="col-lg-8 mx-auto">
+      <div class="col-md-9 mx-auto" style="width:810px!important">
         <div class="card bg-light">
           <div class="card-header email-detail-head bg-white">
             <div class="user-details d-flex justify-content-between align-items-center flex-wrap">
@@ -53,54 +58,54 @@
                 {{ createdAt(resPreview.data.created_at) }}</small>
             </div>
           </div>
-
-          <div class="card-body mail-message-wrapper pt-2 px-0 border-top" id="download_res_doc">
-            <RenderPDFDoc :file="resPreview.data.file_url" comp="response" />
+          <div class="card-body mail-message-wrapper pt-2 px-0 border-top" id="download_res_doc" style="width:780px">
+            <RenderPDFDoc v-for="doc in sortedFile" :key="doc.id" :file="doc.file_url"
+              :oldDoc="{ isOld: doc.isOldDoc }" />
           </div>
         </div>
-      </div>
 
-      <div class="col-lg-3 d-none">
-        <div class="card">
-          <div class="card-header">
-            <h4 class="card-title">Audit Trail</h4>
-          </div>
-          <div class="card-body">
-            <template v-if="!theDoc">
-              <div class="text-center">
-                <span class="spinner-border spinner-border-sm"></span>
-                Loading...
-              </div>
-            </template>
-            <template v-else>
-              <ul class="timeline">
-                <li class="timeline-item" v-for="(participant, index) in theDoc.participants" :key="index">
-                  <template v-if="theDoc.status == 'New'">
-                    <span class="timeline-point timeline-point-secondary timeline-point-indicator"></span>
-                  </template>
-                  <template v-else-if="theDoc.status == 'Sent'">
-                    <span class="timeline-point timeline-point-primary timeline-point-indicator"></span>
-                  </template>
-                  <template v-else>
-                    <span class="timeline-point timeline-point-success timeline-point-indicator"></span>
-                  </template>
-                  <div class="timeline-event">
-                    <div class="d-flex justify-content-between flex-sm-row flex-column mb-sm-0 mb-1">
-                      <h6 class="text-dark text-capitalize">
-                        {{ participant.user.first_name }}
-                        {{ participant.user.last_name }} ({{ participant.role }})
-                      </h6>
-                      <span class="timeline-event-time text-dark">
-                        {{ createdAt("2022-07-01 03:12:21") }}</span>
+        <div class="col-lg-3 d-none">
+          <div class="card">
+            <div class="card-header">
+              <h4 class="card-title">Audit Trail</h4>
+            </div>
+            <div class="card-body">
+              <template v-if="!theDoc">
+                <div class="text-center">
+                  <span class="spinner-border spinner-border-sm"></span>
+                  Loading...
+                </div>
+              </template>
+              <template v-else>
+                <ul class="timeline">
+                  <li class="timeline-item" v-for="(participant, index) in theDoc.participants" :key="index">
+                    <template v-if="theDoc.status == 'New'">
+                      <span class="timeline-point timeline-point-secondary timeline-point-indicator"></span>
+                    </template>
+                    <template v-else-if="theDoc.status == 'Sent'">
+                      <span class="timeline-point timeline-point-primary timeline-point-indicator"></span>
+                    </template>
+                    <template v-else>
+                      <span class="timeline-point timeline-point-success timeline-point-indicator"></span>
+                    </template>
+                    <div class="timeline-event">
+                      <div class="d-flex justify-content-between flex-sm-row flex-column mb-sm-0 mb-1">
+                        <h6 class="text-dark text-capitalize">
+                          {{ participant.user.first_name }}
+                          {{ participant.user.last_name }} ({{ participant.role }})
+                        </h6>
+                        <span class="timeline-event-time text-dark">
+                          {{ createdAt("2022-07-01 03:12:21") }}</span>
+                      </div>
+                      <p>Added text</p>
                     </div>
-                    <p>Added text</p>
-                  </div>
-                </li>
-              </ul>
-            </template>
+                  </li>
+                </ul>
+              </template>
 
-            <div class="d-flex justify-content-end mt-4">
-              <img src="@/assets/logo-dark.png" height="15" alt="ToNote Brand" />
+              <div class="d-flex justify-content-end mt-4">
+                <img src="@/assets/logo-dark.png" height="15" alt="ToNote Brand" />
+              </div>
             </div>
           </div>
         </div>
@@ -134,16 +139,16 @@
 <script setup>
 import PreLoader from "@/components/PreLoader.vue";
 import ModalComp from "@/components/ModalComp.vue";
+import RenderPDFDoc from "@/components/Document/Edit/Main/RenderPDFDoc.vue";
 
 import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
+import html2pdf from 'html2pdf.js';
 
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import moment from "moment";
 
 import { useActions, useGetters } from "vuex-composition-helpers/dist";
 import { useRouter } from "vue-router";
-import RenderPDFDoc from "@/components/Document/Edit/Main/RenderPDFDoc.vue";
 import { useToast } from "vue-toast-notification";
 
 const toast = useToast();
@@ -164,30 +169,50 @@ const isLoading = ref(true);
 const uri = ref("");
 const theDoc = ref("");
 
-const exportPDF = () => {
-  const data = document.getElementById("download_res_doc");
-  html2canvas(data).then((canvas) => {
-    const imgWidth = 208;
-    const pageHeight = 295;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    let heightLeft = imgHeight - 10;
-    let position = 10;
-
-    heightLeft -= pageHeight;
-
-    const doc = new jsPDF("p", "mm");
-
-    doc.addImage(canvas, "PNG", 0, position, imgWidth, imgHeight, "", "FAST");
-
-    while (heightLeft >= 0) {
-      position = heightLeft - imgHeight;
-      doc.addPage();
-      doc.addImage(canvas, "PNG", 0, position, imgWidth, imgHeight, "", "FAST");
-      heightLeft -= pageHeight;
+const sortedFile = computed(() => {
+  const files = [];
+  resPreview.value?.data.document.documentUploads?.filter((item) => {
+    if (item.status == 'Processed' && item.number_ordering != null) {
+      files.push({ id: item.id, file_url: item.file_url, number: item.number_ordering, isOldDoc: false });
     }
-
-    doc.save(resPreview.value.title + ".pdf");
+    files.sort((a, b) => (a.number > b.number ? 1 : -1));
   });
+  return files;
+});
+
+const isDownload = ref(false);
+const exportHTMLToPDF = async () => {
+  isDownload.value = true
+  const pages = document.getElementsByClassName('downloader');
+
+  const opt = {
+    margin: [0, 0, -2, 0],
+    filename: resPreview.value.title,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { dpi: 192, letterRendering: true },
+    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait', compressPDF: true }
+  };
+
+  const doc = new jsPDF(opt.jsPDF);
+  const pageSize = jsPDF.getPageSize(opt.jsPDF);
+
+  doc.setProperties({
+    title: resPreview.value.title,
+    author: 'ToNote',
+    keywords: 'To-Sign, sign-link, e-signing, web 1.0',
+    creator: 'ToNote Technologies'
+  });
+
+  for (let i = 0; i < pages.length; i++) {
+    const page = pages[i];
+    const pageImage = await html2pdf().set(opt).from(page).outputImg()
+    if (i != 0) doc.addPage();
+    doc.addImage(pageImage.src, 'jpeg', opt.margin[0], opt.margin[0], pageSize.width, pageSize.height);
+  }
+
+  const pdf = doc.save(opt.filename);
+  if (pdf) isDownload.value = false
+  return pdf;
 };
 
 const confirmEdit = () => {
