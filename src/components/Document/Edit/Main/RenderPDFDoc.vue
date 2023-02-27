@@ -7,7 +7,7 @@
   <div v-else id="pdfvuer">
     <div class="downloader">
       <slot name="document-tools"></slot>
-      <template v-if="!['audit', 'response'].includes(comp)">
+      <template v-if="!['audit'].includes(comp)">
         <pdf :src="file" :text="false" :resize="true" class="mb-1" style="padding: 0 1px 1px 0" />
       </template>
 

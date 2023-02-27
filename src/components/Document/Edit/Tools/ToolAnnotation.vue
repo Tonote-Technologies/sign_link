@@ -34,10 +34,14 @@
     :class="[tool.tool_name == 'Textarea' ? 'text-wrapper z-indexed' : 'image-area']"
     :handles="['tl', 'tr', 'bl', 'br']" class-name-active="active-class" class-name-dragging="dragging-class"
     class-name-handle="handle-class" class-name-resizing="resizing-class">
-    <input v-if="tool.tool_name == 'Textarea'" type="text" v-model="tool.value" class="textareaTool h-100"
+    <textarea v-if="tool.tool_name == 'Textarea'" v-model="tool.value" class="textareaTool h-100"
       :data-id="tool.id" @blur="textInput($event.target, x, y)" placeholder="Input text here"
       :readonly="!tool.allow_signature && !profile?.id ? true : false"
-      style="border: none; outline: none; font-weight: 500; transition: width 0.25s;color:#000!important;" />
+      style="border: none; outline: none; font-weight: 500; transition: width 0.25s;color:#000!important;"></textarea>
+    <!-- <input v-if="tool.tool_name == 'Textarea'" type="text" v-model="tool.value" class="textareaTool h-100"
+      :data-id="tool.id" @blur="textInput($event.target, x, y)" placeholder="Input text here"
+      :readonly="!tool.allow_signature && !profile?.id ? true : false"
+      style="border: none; outline: none; font-weight: 500; transition: width 0.25s;color:#000!important;" /> -->
     <template v-else>
       <div class="grid" v-if="isToolLoading.id == tool.id && isToolLoading.active">
         <span class="spinner-border" role="status"></span>
