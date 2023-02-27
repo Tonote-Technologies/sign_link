@@ -28,7 +28,7 @@
     </div>
 
     <div class="row">
-      <div class="col-md-9 mx-auto" style="width:78%!important">
+      <div class="col-md-9 mx-auto" style="width:810px!important">
         <div class="card bg-light">
           <div class="card-header email-detail-head bg-white">
             <div class="user-details d-flex justify-content-between align-items-center flex-wrap">
@@ -58,14 +58,9 @@
                 {{ createdAt(resPreview.data.created_at) }}</small>
             </div>
           </div>
-          <div class="card-body mail-message-wrapper pt-2 px-0 border-top" id="download_res_doc">
+          <div class="card-body mail-message-wrapper pt-2 px-0 border-top" id="download_res_doc" style="width:780px">
             <RenderPDFDoc v-for="doc in sortedFile" :key="doc.id" :file="doc.file_url"
               :oldDoc="{ isOld: doc.isOldDoc }" />
-            <!-- <div id="mainWrapper" class="mx-auto"> -->
-            <!-- <RenderPDFDoc v-for="doc in sortedFile" :key="doc.id" :file="doc.file_url" class="w-100"
-                :oldDoc="{ isOld: doc.isOldDoc }" />
-            </div> -->
-            <!-- </div> -->
           </div>
         </div>
 
